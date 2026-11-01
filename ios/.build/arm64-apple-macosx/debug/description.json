@@ -1,0 +1,716 @@
+{
+  "builtTestProducts" : [
+    {
+      "binaryPath" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAIiOSPackageTests.xctest/Contents/MacOS/WingAIiOSPackageTests",
+      "packagePath" : "/Users/zardam/mine/wing-ai/ios",
+      "productName" : "WingAIiOSPackageTests"
+    }
+  ],
+  "copyCommands" : {
+
+  },
+  "explicitTargetDependencyImportCheckingMode" : {
+    "none" : {
+
+    }
+  },
+  "generatedSourceTargetSet" : [
+
+  ],
+  "pluginDescriptions" : [
+
+  ],
+  "swiftCommands" : {
+    "C.WingAICore-arm64-apple-macosx-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/sources",
+      "importPath" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/Shared/WingAiApiClient.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/Shared/WingAiDesignSystem.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/Shared/WingModels.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/WingAIApp/WingAIApp.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/WingAIBroadcast/SampleHandler.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/WingAIKeyboard/KeyboardViewController.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/WingAIKeyboard/WingAiKeyboardView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "WingAICore",
+      "moduleOutputPath" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/Modules/WingAICore.swiftmodule",
+      "objects" : [
+        "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/WingAiApiClient.swift.o",
+        "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/WingAiDesignSystem.swift.o",
+        "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/WingModels.swift.o",
+        "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/WingAIApp.swift.o",
+        "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/SampleHandler.swift.o",
+        "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/KeyboardViewController.swift.o",
+        "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/WingAiKeyboardView.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx13.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-j10",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/include/WingAICore-Swift.h",
+        "-swift-version",
+        "5",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "ios"
+      ],
+      "outputFileMapPath" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/WingAiApiClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/WingAiDesignSystem.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/WingModels.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/WingAIApp.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/SampleHandler.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/KeyboardViewController.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/WingAiKeyboardView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/Modules/WingAICore.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/zardam/mine/wing-ai/ios/Shared/WingAiApiClient.swift",
+        "/Users/zardam/mine/wing-ai/ios/Shared/WingAiDesignSystem.swift",
+        "/Users/zardam/mine/wing-ai/ios/Shared/WingModels.swift",
+        "/Users/zardam/mine/wing-ai/ios/WingAIApp/WingAIApp.swift",
+        "/Users/zardam/mine/wing-ai/ios/WingAIBroadcast/SampleHandler.swift",
+        "/Users/zardam/mine/wing-ai/ios/WingAIKeyboard/KeyboardViewController.swift",
+        "/Users/zardam/mine/wing-ai/ios/WingAIKeyboard/WingAiKeyboardView.swift"
+      ],
+      "tempsPath" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build",
+      "wholeModuleOptimization" : false
+    },
+    "C.WingAITests-arm64-apple-macosx-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAITests.build/sources",
+      "importPath" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/Tests/WingAITests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/Modules/WingAICore.swiftmodule"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAITests.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "WingAITests",
+      "moduleOutputPath" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/Modules/WingAITests.swiftmodule",
+      "objects" : [
+        "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAITests.build/WingAITests.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx14.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-Xfrontend",
+        "-enable-cross-import-overlays",
+        "-j10",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-swift-version",
+        "5",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "ios"
+      ],
+      "outputFileMapPath" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAITests.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAITests.build/WingAITests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/Modules/WingAITests.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/zardam/mine/wing-ai/ios/Tests/WingAITests.swift"
+      ],
+      "tempsPath" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAITests.build",
+      "wholeModuleOptimization" : false
+    },
+    "C.WingAIiOSPackageTests-arm64-apple-macosx-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAIiOSPackageTests.build/sources",
+      "importPath" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAIiOSPackageTests.derived/runner.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/Modules/WingAITests.swiftmodule"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAIiOSPackageTests.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "WingAIiOSPackageTests",
+      "moduleOutputPath" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/Modules/WingAIiOSPackageTests.swiftmodule",
+      "objects" : [
+        "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAIiOSPackageTests.build/runner.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx13.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-Xfrontend",
+        "-enable-cross-import-overlays",
+        "-j10",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAIiOSPackageTests.build/include/WingAIiOSPackageTests-Swift.h",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "ios"
+      ],
+      "outputFileMapPath" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAIiOSPackageTests.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAIiOSPackageTests.build/runner.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/Modules/WingAIiOSPackageTests.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAIiOSPackageTests.derived/runner.swift"
+      ],
+      "tempsPath" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAIiOSPackageTests.build",
+      "wholeModuleOptimization" : false
+    }
+  },
+  "swiftFrontendCommands" : {
+
+  },
+  "swiftTargetScanArgs" : {
+    "WingAICore" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "WingAICore",
+      "-package-name",
+      "ios",
+      "-c",
+      "/Users/zardam/mine/wing-ai/ios/Shared/WingAiApiClient.swift",
+      "/Users/zardam/mine/wing-ai/ios/Shared/WingAiDesignSystem.swift",
+      "/Users/zardam/mine/wing-ai/ios/Shared/WingModels.swift",
+      "/Users/zardam/mine/wing-ai/ios/WingAIApp/WingAIApp.swift",
+      "/Users/zardam/mine/wing-ai/ios/WingAIBroadcast/SampleHandler.swift",
+      "/Users/zardam/mine/wing-ai/ios/WingAIKeyboard/KeyboardViewController.swift",
+      "/Users/zardam/mine/wing-ai/ios/WingAIKeyboard/WingAiKeyboardView.swift",
+      "-I",
+      "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx13.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-j10",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/include/WingAICore-Swift.h",
+      "-swift-version",
+      "5",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "ios",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ],
+    "WingAITests" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "WingAITests",
+      "-package-name",
+      "ios",
+      "-c",
+      "/Users/zardam/mine/wing-ai/ios/Tests/WingAITests.swift",
+      "-I",
+      "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx14.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-Xfrontend",
+      "-enable-cross-import-overlays",
+      "-j10",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-swift-version",
+      "5",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "ios",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ],
+    "WingAIiOSPackageTests" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "WingAIiOSPackageTests",
+      "-package-name",
+      "ios",
+      "-c",
+      "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAIiOSPackageTests.derived/runner.swift",
+      "-I",
+      "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx13.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-Xfrontend",
+      "-enable-cross-import-overlays",
+      "-j10",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAIiOSPackageTests.build/include/WingAIiOSPackageTests-Swift.h",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "ios",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ]
+  },
+  "targetDependencyMap" : {
+    "WingAICore" : [
+
+    ],
+    "WingAITests" : [
+      "WingAICore"
+    ],
+    "WingAIiOSPackageTests" : [
+      "WingAITests",
+      "WingAICore"
+    ]
+  },
+  "testDiscoveryCommands" : {
+
+  },
+  "testEntryPointCommands" : {
+    "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAIiOSPackageTests.derived/runner.swift" : {
+      "inputs" : [
+
+      ],
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAIiOSPackageTests.derived/runner.swift"
+        }
+      ]
+    }
+  },
+  "traitConfiguration" : {
+    "default" : {
+
+    }
+  },
+  "writeCommands" : {
+    "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/Shared/WingAiApiClient.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/Shared/WingAiDesignSystem.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/Shared/WingModels.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/WingAIApp/WingAIApp.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/WingAIBroadcast/SampleHandler.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/WingAIKeyboard/KeyboardViewController.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/WingAIKeyboard/WingAiKeyboardView.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/sources"
+    },
+    "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAITests.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/Tests/WingAITests.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAITests.build/sources"
+    },
+    "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAIiOSPackageTests.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAIiOSPackageTests.derived/runner.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAIiOSPackageTests.build/sources"
+    },
+    "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAIiOSPackageTests.product/Objects.LinkFileList" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<link-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/KeyboardViewController.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/SampleHandler.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/WingAIApp.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/WingAiApiClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/WingAiDesignSystem.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/WingAiKeyboardView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/WingModels.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAITests.build/WingAITests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAIiOSPackageTests.build/runner.swift.o"
+        }
+      ],
+      "outputFilePath" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAIiOSPackageTests.product/Objects.LinkFileList"
+    },
+    "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt" : {
+      "alwaysOutOfDate" : true,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<swift-get-version>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+        }
+      ],
+      "outputFilePath" : "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+    }
+  }
+}

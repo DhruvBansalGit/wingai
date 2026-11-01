@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAITests.build/primary.swiftdeps"
+  },
+  "/Users/zardam/mine/wing-ai/ios/Tests/WingAITests.swift": {
+    "dependencies": "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAITests.build/WingAITests.d",
+    "object": "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAITests.build/WingAITests.swift.o",
+    "swiftmodule": "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAITests.build/WingAITests~partial.swiftmodule",
+    "swift-dependencies": "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAITests.build/WingAITests.swiftdeps",
+    "diagnostics": "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAITests.build/WingAITests.dia"
+  }
+}

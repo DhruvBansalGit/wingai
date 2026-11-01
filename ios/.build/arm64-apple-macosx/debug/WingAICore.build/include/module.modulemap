@@ -1,0 +1,3 @@
+module WingAICore {
+    header "/Users/zardam/mine/wing-ai/ios/.build/arm64-apple-macosx/debug/WingAICore.build/include/WingAICore-Swift.h"
+}

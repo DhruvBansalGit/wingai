@@ -1248,12 +1248,12 @@ public class LatinIME extends InputMethodService implements
     public void setSelectionCollapseMode(final boolean collapsed) {
         final View wrapper = mKeyboardSwitcher.getWrapperView();
         if (wrapper != null) {
-            wrapper.setVisibility(collapsed ? View.GONE : View.VISIBLE);
+            wrapper.setVisibility(collapsed ? View.INVISIBLE : View.VISIBLE);
             wrapper.requestLayout();
         }
         final View strip = mKeyboardSwitcher.getStripContainer();
         if (strip != null) {
-            strip.setVisibility(collapsed ? View.GONE : View.VISIBLE);
+            strip.setVisibility(collapsed ? View.INVISIBLE : View.VISIBLE);
             strip.requestLayout();
         }
         if (mInputView != null) {
@@ -1261,8 +1261,13 @@ public class LatinIME extends InputMethodService implements
             mInputView.requestLayout();
             mInputView.invalidate();
         }
+        final InputMethodService.Insets insets = new InputMethodService.Insets();
+        onComputeInsets(insets);
         if (!collapsed) {
             startShowingInputView(false);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                requestShowSelf(0);
+            }
         }
     }
 
