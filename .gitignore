@@ -17,3 +17,7 @@ worker/.dev.vars
 
 # macOS
 .DS_Store
+
+# iOS / SwiftPM build artifacts
+ios/.build/
+.build/
