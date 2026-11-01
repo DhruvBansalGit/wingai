@@ -16,7 +16,7 @@ enum class ReplyTone(val wireName: String, val label: String) {
 }
 
 enum class ShortcutAction(val wireName: String, val label: String) {
-    READ_SCREEN("read_screen", "Read Screen & Suggest Replies"),
+    READ_SCREEN("read_screen", "Select & Analyze Screen Area"),
     OPEN_PANEL("open_panel", "Open AI Control Panel"),
     PASTE_CONTEXT("paste_context", "Paste Conversation Context"),
     NONE("none", "Disabled");
@@ -71,6 +71,7 @@ data class AiSessionState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val pendingImageBase64: String? = null,
+    val selectedImageBase64: String? = null,
     val pastedContext: String = "",
     val selectedTone: ReplyTone? = null,
     val customInstruction: String = "",

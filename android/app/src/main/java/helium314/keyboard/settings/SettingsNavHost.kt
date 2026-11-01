@@ -68,6 +68,7 @@ fun SettingsNavHost(
         composable(SettingsDestination.Settings) {
             MainSettingsScreen(
                 onClickWingAiUser = { navController.navigate(SettingsDestination.WingAiUser) },
+                onClickWingAiOnboarding = { navController.navigate(SettingsDestination.WingAiOnboarding) },
                 onClickAbout = { navController.navigate(SettingsDestination.About) },
                 onClickTextCorrection = { navController.navigate(SettingsDestination.TextCorrection) },
                 onClickPreferences = { navController.navigate(SettingsDestination.Preferences) },
@@ -84,6 +85,9 @@ fun SettingsNavHost(
         }
         composable(SettingsDestination.WingAiUser) {
             UserAccountScreen(onClickBack = ::goBack)
+        }
+        composable(SettingsDestination.WingAiOnboarding) {
+            WelcomeWizard(close = ::goBack, finish = ::goBack)
         }
         composable(SettingsDestination.TextCorrection) {
             TextCorrectionScreen(onClickBack = ::goBack)
@@ -149,6 +153,7 @@ fun SettingsNavHost(
 object SettingsDestination {
     const val Settings = "settings"
     const val WingAiUser = "wingai_user"
+    const val WingAiOnboarding = "wingai_onboarding"
     const val About = "about"
     const val TextCorrection = "text_correction"
     const val Preferences = "preferences"

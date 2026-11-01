@@ -201,4 +201,53 @@ describe("WingAI Cloudflare Worker API", () => {
     expect(r2.status).toBe(200);
     expect(r3.status).toBe(429);
   });
+
+  it("saves cropped image and JSON audit log to R2 STORAGE when bound", async () => {
+    mockGeminiSuccess();
+    const storedObjects = new Map<string, { value: Uint8Array | string; contentType?: string }>();
+    const mockR2 = {
+      async put(
+        key: string,
+        value: Uint8Array | string,
+        options?: { httpMetadata?: { contentType?: string } }
+      ) {
+        storedObjects.set(key, {
+          value,
+          contentType: options?.httpMetadata?.contentType,
+        });
+      },
+    };
+
+    const res = await app.request(
+      "/v1/analyze",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-User-Id": "wing_r2_user",
+        },
+        body: JSON.stringify({
+          image_base64: btoa("fake-jpeg-binary"),
+          mime_type: "image/jpeg",
+          tone: "casual",
+        }),
+      },
+      { ...DEFAULT_ENV, STORAGE: mockR2 }
+    );
+    expect(res.status).toBe(200);
+
+    // Wait microtask tick for async archival
+    await new Promise((r) => setTimeout(r, 15));
+
+    const keys = Array.from(storedObjects.keys());
+    const imageKey = keys.find((k) => k.startsWith("images/") && k.endsWith(".jpg"));
+    const logKey = keys.find((k) => k.startsWith("logs/") && k.endsWith(".json"));
+    expect(imageKey).toBeDefined();
+    expect(logKey).toBeDefined();
+
+    const logContent = JSON.parse(String(storedObjects.get(logKey!)?.value));
+    expect(logContent.user_id).toBe("wing_r2_user");
+    expect(logContent.image_r2_key).toBe(imageKey);
+    expect(logContent.status_code).toBe(200);
+  });
 });

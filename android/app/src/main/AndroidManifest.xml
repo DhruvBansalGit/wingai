@@ -36,12 +36,26 @@ SPDX-License-Identifier: Apache-2.0 AND GPL-3.0-only
             android:excludeFromRecents="true"
             android:launchMode="singleInstance"
             android:taskAffinity=""
+            android:windowSoftInputMode="stateAlwaysHidden"
             android:theme="@style/TransparentActivityTheme" />
 
         <service
             android:name="com.wingai.keyboard.capture.ScreenCaptureService"
             android:exported="false"
             android:foregroundServiceType="mediaProjection" />
+
+        <service
+            android:name="com.wingai.keyboard.capture.WingAiScreenshotService"
+            android:label="WingAI Select &amp; Search"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/wingai_screenshot_service" />
+        </service>
 
         <!-- Services -->
         <service android:name="LatinIME"

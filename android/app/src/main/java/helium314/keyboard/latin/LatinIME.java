@@ -770,12 +770,18 @@ public class LatinIME extends InputMethodService implements
 
     @Override
     public void onStartInput(final EditorInfo editorInfo, final boolean restarting) {
+        InputConnectionBridge.INSTANCE.bindInputMethod(
+                this,
+                this::getCurrentInputConnection,
+                editorInfo != null ? editorInfo.inputType : 0
+        );
         mHandler.onStartInput(editorInfo, restarting);
     }
 
     @Override
     public void onStartInputView(final EditorInfo editorInfo, final boolean restarting) {
         InputConnectionBridge.INSTANCE.bindInputMethod(
+                this,
                 this::getCurrentInputConnection,
                 editorInfo != null ? editorInfo.inputType : 0
         );
@@ -1181,6 +1187,14 @@ public class LatinIME extends InputMethodService implements
             return;
         }
         final int inputHeight = mInputView.getHeight();
+        if (InputConnectionBridge.INSTANCE.isCollapsedForSelection()) {
+            outInsets.contentTopInsets = inputHeight;
+            outInsets.visibleTopInsets = inputHeight;
+            outInsets.touchableInsets = InputMethodService.Insets.TOUCHABLE_INSETS_REGION;
+            outInsets.touchableRegion.setEmpty();
+            mInsetsUpdater.setInsets(outInsets);
+            return;
+        }
         if (isImeSuppressedByHardwareKeyboard() && !visibleKeyboardView.isShown()) {
             // If there is a hardware keyboard and a visible software keyboard view has been hidden,
             // no visual element will be shown on the screen.
@@ -1229,6 +1243,27 @@ public class LatinIME extends InputMethodService implements
 
     public void stopShowingInputView() {
         showWindow(false /* showInput */);
+    }
+
+    public void setSelectionCollapseMode(final boolean collapsed) {
+        final View wrapper = mKeyboardSwitcher.getWrapperView();
+        if (wrapper != null) {
+            wrapper.setVisibility(collapsed ? View.GONE : View.VISIBLE);
+            wrapper.requestLayout();
+        }
+        final View strip = mKeyboardSwitcher.getStripContainer();
+        if (strip != null) {
+            strip.setVisibility(collapsed ? View.GONE : View.VISIBLE);
+            strip.requestLayout();
+        }
+        if (mInputView != null) {
+            mInputView.setAlpha(collapsed ? 0f : 1f);
+            mInputView.requestLayout();
+            mInputView.invalidate();
+        }
+        if (!collapsed) {
+            startShowingInputView(false);
+        }
     }
 
     @Override

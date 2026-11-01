@@ -4,10 +4,12 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.graphics.BitmapFactory
+import android.provider.Settings
 import android.widget.Toast
 import com.wingai.keyboard.capture.ScreenCaptureActivity
 import com.wingai.keyboard.capture.ScreenCaptureManager
-import com.wingai.keyboard.capture.ScreenCaptureService
+import com.wingai.keyboard.capture.WingAiScreenshotService
 import com.wingai.keyboard.data.InputConnectionBridge
 import com.wingai.keyboard.data.ReplyTone
 import com.wingai.keyboard.data.RewriteAction
@@ -54,35 +56,61 @@ class AiSessionController(
         }
     }
 
+    /**
+     * Launches the Circle-to-Search / Select & Search region selector using an instant
+     * in-memory screenshot (never saved to disk/gallery and never triggers the MediaProjection
+     * screen-recording dialog).
+     */
     fun startScreenAnalysis() {
         if (InputConnectionBridge.isPasswordFieldActive()) {
             InputConnectionBridge.updateState {
                 it.copy(
                     isPanelOpen = true,
-                    errorMessage = "Screen analysis is disabled while a password field is active."
+                    errorMessage = "Screen selection is disabled while a password field is active."
                 )
             }
             return
         }
-        if (ScreenCaptureManager.hasActiveSession()) {
-            val serviceIntent = Intent(context, ScreenCaptureService::class.java).apply {
-                action = ScreenCaptureService.ACTION_CAPTURE_FRAME
-            }
-            context.startForegroundService(serviceIntent)
-        } else {
-            val intent = Intent(context, ScreenCaptureActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                putExtra(ScreenCaptureService.EXTRA_CAPTURE_IMMEDIATELY, true)
-            }
-            context.startActivity(intent)
+
+        // Instant in-memory screenshot (Circle to Search style — no screen share dialog, no file saved)
+        if (WingAiScreenshotService.captureForSelectAndSearch()) {
+            return
         }
+
+        // Prompt user once to enable "WingAI Select & Search" if not yet enabled
+        Toast.makeText(
+            context,
+            "Enable 'WingAI Select & Search' once for instant Circle-to-Search snapshots (no screen share popup).",
+            Toast.LENGTH_LONG
+        ).show()
+        val settingsIntent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        runCatching { context.startActivity(settingsIntent) }
     }
 
     fun pasteFromClipboard() {
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
-        val text = clipboard?.primaryClip
-            ?.takeIf { it.itemCount > 0 }
-            ?.getItemAt(0)
+        val item = clipboard?.primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)
+
+        // If clipboard holds a copied screenshot/image, open the Select & Search region selector on it!
+        val clipUri = item?.uri
+        val clipboardBitmap = clipUri?.let { uri ->
+            runCatching {
+                context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
+            }.getOrNull()
+        }
+        if (clipboardBitmap != null) {
+            ScreenCaptureManager.setCapturedBitmap(clipboardBitmap)
+            val cropIntent = Intent(context, ScreenCaptureActivity::class.java).apply {
+                action = ScreenCaptureActivity.ACTION_SHOW_CROP
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            }
+            context.startActivity(cropIntent)
+            return
+        }
+
+        val text = item
             ?.coerceToText(context)
             ?.toString()
             ?.trim()
@@ -90,7 +118,7 @@ class AiSessionController(
 
         if (text.isBlank()) {
             InputConnectionBridge.updateState {
-                it.copy(errorMessage = "Clipboard is empty. Copy conversation text first.")
+                it.copy(errorMessage = "Clipboard is empty. Copy conversation text or a screenshot first.")
             }
         } else {
             InputConnectionBridge.updateState {
@@ -102,10 +130,8 @@ class AiSessionController(
     fun selectTone(tone: ReplyTone?) {
         InputConnectionBridge.updateState { it.copy(selectedTone = tone) }
         val state = InputConnectionBridge.sessionState.value
-        if (state.pastedContext.isNotBlank()) {
+        if (!state.selectedImageBase64.isNullOrBlank() || state.pastedContext.isNotBlank()) {
             generateReply()
-        } else if (state.suggestions.isNotEmpty() || ScreenCaptureManager.hasActiveSession()) {
-            startScreenAnalysis()
         }
     }
 
@@ -115,6 +141,10 @@ class AiSessionController(
 
     fun updatePastedContext(contextText: String) {
         InputConnectionBridge.updateState { it.copy(pastedContext = contextText) }
+    }
+
+    fun clearSelectedImage() {
+        InputConnectionBridge.updateState { it.copy(selectedImageBase64 = null) }
     }
 
     fun selectSuggestion(text: String) {
@@ -127,7 +157,7 @@ class AiSessionController(
 
     fun confirmUploadPendingCapture() {
         val state = InputConnectionBridge.sessionState.value
-        val base64 = state.pendingImageBase64 ?: return
+        val base64 = state.pendingImageBase64 ?: state.selectedImageBase64 ?: return
         activeJob?.cancel()
         activeJob = scope.launch {
             InputConnectionBridge.updateState { it.copy(isLoading = true, errorMessage = null) }
@@ -167,19 +197,23 @@ class AiSessionController(
 
     fun cancelPendingCapture() {
         InputConnectionBridge.updateState {
-            it.copy(pendingImageBase64 = null, errorMessage = "Captured image discarded.")
+            it.copy(pendingImageBase64 = null, selectedImageBase64 = null, errorMessage = "Selected image cleared.")
         }
     }
 
     fun generateReply() {
         val state = InputConnectionBridge.sessionState.value
-        if (state.pastedContext.isBlank() && state.pendingImageBase64.isNullOrBlank()) {
+        if (
+            state.pastedContext.isBlank() &&
+            state.pendingImageBase64.isNullOrBlank() &&
+            state.selectedImageBase64.isNullOrBlank()
+        ) {
             InputConnectionBridge.updateState {
-                it.copy(errorMessage = "Tap Read or Paste Chat before generating replies.")
+                it.copy(errorMessage = "Tap Select or Paste Chat before generating replies.")
             }
             return
         }
-        if (!state.pendingImageBase64.isNullOrBlank()) {
+        if (!state.pendingImageBase64.isNullOrBlank() || !state.selectedImageBase64.isNullOrBlank()) {
             confirmUploadPendingCapture()
             return
         }

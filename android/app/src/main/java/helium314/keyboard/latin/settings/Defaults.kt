@@ -41,11 +41,11 @@ object Defaults {
     }
 
     private const val DEFAULT_SIZE_SCALE = 1.0f // 100%
-    const val PREF_THEME_STYLE = KeyboardTheme.STYLE_MATERIAL
-    const val PREF_ICON_STYLE = KeyboardTheme.STYLE_MATERIAL
+    const val PREF_THEME_STYLE = KeyboardTheme.STYLE_ROUNDED
+    const val PREF_ICON_STYLE = KeyboardTheme.STYLE_ROUNDED
     const val PREF_THEME_COLORS = KeyboardTheme.THEME_LIGHT
     const val PREF_THEME_COLORS_NIGHT = KeyboardTheme.THEME_DARK
-    const val PREF_THEME_KEY_BORDERS = false
+    const val PREF_THEME_KEY_BORDERS = true
     @JvmField
     val PREF_THEME_DAY_NIGHT = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
     const val PREF_CUSTOM_ICON_NAMES = ""
@@ -90,8 +90,8 @@ object Defaults {
     val PREF_BOTTOM_PADDING_SCALE = arrayOf(DEFAULT_SIZE_SCALE, 0f)
     @JvmField
     val PREF_SIDE_PADDING_SCALE = Array(4) { 0f }
-    const val PREF_FONT_SCALE = DEFAULT_SIZE_SCALE
-    const val PREF_EMOJI_FONT_SCALE = DEFAULT_SIZE_SCALE
+    const val PREF_FONT_SCALE = 1.05f
+    const val PREF_EMOJI_FONT_SCALE = 1.04f
     const val PREF_EMOJI_KEY_FIT = true
     const val PREF_EMOJI_SKIN_TONE = ""
     const val PREF_SPACE_HORIZONTAL_SWIPE = "move_cursor"

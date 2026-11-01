@@ -13,8 +13,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -23,7 +21,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -47,8 +44,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 
 /**
- * Compact action buttons embedded directly inside HeliBoard's 40dp SuggestionStripView
- * so no extra top bar overlaps the host app's message field.
+ * Minimal key-cap actions embedded inside HeliBoard's SuggestionStripView,
+ * dynamically matching the keyboard's exact key colors and rounded geometry.
  */
 class WingAiToolbarActionsView @JvmOverloads constructor(
     context: Context,
@@ -94,7 +91,7 @@ class WingAiToolbarActionsView @JvmOverloads constructor(
             setViewTreeViewModelStoreOwner(this@WingAiToolbarActionsView)
             setViewTreeSavedStateRegistryOwner(this@WingAiToolbarActionsView)
             setContent {
-                MaterialTheme(colorScheme = darkColorScheme()) {
+                WingAiTheme {
                     val state by InputConnectionBridge.sessionState.collectAsState()
                     val isPassword = InputConnectionBridge.isPasswordFieldActive()
 
@@ -107,39 +104,37 @@ class WingAiToolbarActionsView @JvmOverloads constructor(
                     ) {
                         if (!isPassword) {
                             CompactPillButton(
-                                text = "\uD83D\uDCF8 Read",
-                                backgroundColor = Color(0xFF5C6BC0),
-                                textColor = Color.White,
+                                text = "Select",
+                                backgroundColor = WingAiTokens.Surface1,
+                                borderColor = WingAiTokens.BorderSubtle,
+                                textColor = WingAiTokens.TextPrimary,
+                                height = 28.dp,
                                 onClick = { aiController.startScreenAnalysis() }
-                            )
-                            CompactPillButton(
-                                text = "\u2728 Ask",
-                                backgroundColor = Color(0xFF28334D),
-                                onClick = {
-                                    val prompt = InputConnectionBridge.consumeHostFieldTextAsPrompt()
-                                    if (prompt.isBlank()) {
-                                        Toast.makeText(
-                                            context,
-                                            "Type your instruction in the message box first, then tap Ask.",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    } else {
-                                        aiController.startScreenAnalysis()
-                                    }
-                                }
                             )
                         }
 
                         CompactPillButton(
-                            text = if (isPassword) {
-                                "\uD83D\uDD12"
-                            } else if (state.isPanelOpen) {
-                                "\u2328\uFE0F Keys"
-                            } else {
-                                "\uD83E\uDEBD AI"
+                            text = when {
+                                isPassword -> "Locked"
+                                state.isPanelOpen -> "Keys"
+                                else -> "AI"
                             },
-                            backgroundColor = if (state.isPanelOpen) Color(0xFF3949AB) else Color(0xFF232C42),
-                            textColor = Color.White,
+                            backgroundColor = if (state.isPanelOpen) {
+                                WingAiTokens.AccentPrimary
+                            } else {
+                                WingAiTokens.Surface2
+                            },
+                            borderColor = if (state.isPanelOpen) {
+                                WingAiTokens.AccentPrimary
+                            } else {
+                                WingAiTokens.BorderSubtle
+                            },
+                            textColor = if (state.isPanelOpen) {
+                                WingAiTokens.OnAccentPrimary
+                            } else {
+                                WingAiTokens.TextPrimary
+                            },
+                            height = 28.dp,
                             onClick = {
                                 if (!isPassword) {
                                     InputConnectionBridge.updateState {
@@ -165,8 +160,7 @@ class WingAiToolbarActionsView @JvmOverloads constructor(
 
 /**
  * Fixed-height WingAI Reply Panel placed inside KeyboardWrapperView.
- * Uses the exact measured pixel height of MainKeyboardView (never MATCH_PARENT / fillMaxSize)
- * so the keyboard never stretches to fill the phone screen.
+ * Uses the exact background and key-cap surface colors of the active keyboard theme.
  */
 class WingAiStripView @JvmOverloads constructor(
     context: Context,
@@ -212,7 +206,7 @@ class WingAiStripView @JvmOverloads constructor(
             setViewTreeViewModelStoreOwner(this@WingAiStripView)
             setViewTreeSavedStateRegistryOwner(this@WingAiStripView)
             setContent {
-                MaterialTheme(colorScheme = darkColorScheme()) {
+                WingAiTheme {
                     val state by InputConnectionBridge.sessionState.collectAsState()
                     val isPassword = InputConnectionBridge.isPasswordFieldActive()
                     val showAiPanel = state.isPanelOpen && !isPassword
@@ -238,8 +232,7 @@ class WingAiStripView @JvmOverloads constructor(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(targetHeightDp)
-                                .background(Color(0xFF10141F))
-                                .padding(horizontal = 6.dp, vertical = 4.dp)
+                                .background(WingAiTokens.BgCanvas)
                         ) {
                             AiControlPanel(
                                 state = state,

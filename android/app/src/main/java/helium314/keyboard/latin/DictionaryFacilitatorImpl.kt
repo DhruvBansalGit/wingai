@@ -640,6 +640,10 @@ class DictionaryFacilitatorImpl : DictionaryFacilitator {
 
         private fun getUsedLocales(mainLocale: Locale, context: Context): Collection<Locale> {
             val locales = hashSetOf(mainLocale)
+            // Enable bilingual English + Hinglish (hi-Latn) dictionary lookup automatically on English keyboards
+            if (mainLocale.language == "en") {
+                locales.add(Locale.forLanguageTag("hi-Latn"))
+            }
             // adding secondary locales is a bit tricky since they depend on the subtype
             // but usually this is called with the selected subtype locale
             val selectedSubtype = SubtypeSettings.getSelectedSubtype(context.prefs())

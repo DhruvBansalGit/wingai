@@ -601,7 +601,7 @@
         android:imeSubtypeLocale="hi_ZZ"
         android:languageTag="hi-Latn"
         android:imeSubtypeMode="keyboard"
-        android:imeSubtypeExtraValue="AsciiCapable,EmojiCapable"
+        android:imeSubtypeExtraValue="AsciiCapable,SupportTouchPositionCorrection,EmojiCapable"
         android:isAsciiCapable="true"
     />
     <subtype android:icon="@drawable/ic_ime_switcher"

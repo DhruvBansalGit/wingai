@@ -44,6 +44,7 @@ fun MainSettingsScreen(
     onClickDictionaries: () -> Unit,
     onClickBack: () -> Unit,
     onClickWingAiUser: () -> Unit = {},
+    onClickWingAiOnboarding: () -> Unit = {},
 ) {
     SearchSettingsScreen(
         onClickBack = onClickBack,
@@ -60,6 +61,12 @@ fun MainSettingsScreen(
                     description = "Free (5/day) or Paid (Unlimited) • View usage & User ID",
                     onClick = onClickWingAiUser,
                     icon = R.drawable.ic_settings_about
+                ) { NextScreenIcon() }
+                Preference(
+                    name = "Setup & Onboarding Checklist",
+                    description = "Keyboard activation & Select-and-Search permissions",
+                    onClick = onClickWingAiOnboarding,
+                    icon = R.drawable.ic_setup_check
                 ) { NextScreenIcon() }
                 Preference(
                     name = stringResource(R.string.language_and_layouts_title),

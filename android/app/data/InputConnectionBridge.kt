@@ -1,37 +1,102 @@
 package com.wingai.keyboard.data
 
+import android.inputmethodservice.InputMethodService
+import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.view.inputmethod.ExtractedTextRequest
 import android.view.inputmethod.InputConnection
+import android.view.inputmethod.InputMethodManager
 import com.wingai.keyboard.privacy.PrivacyGuard
+import helium314.keyboard.latin.LatinIME
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import java.lang.ref.WeakReference
 
 object InputConnectionBridge {
+    @Volatile
+    private var imeServiceRef: WeakReference<InputMethodService>? = null
+
     @Volatile
     private var connectionProvider: (() -> InputConnection?)? = null
 
     @Volatile
     private var activeInputType: Int = 0
 
+    @Volatile
+    private var collapsedForSelection: Boolean = false
+
+    private val mainHandler = Handler(Looper.getMainLooper())
+
     private val _sessionState = MutableStateFlow(AiSessionState())
     val sessionState: StateFlow<AiSessionState> = _sessionState.asStateFlow()
 
-    fun bindInputMethod(provider: () -> InputConnection?, inputType: Int) {
+    fun isCollapsedForSelection(): Boolean = collapsedForSelection
+
+    @JvmOverloads
+    fun bindInputMethod(
+        imeService: InputMethodService? = null,
+        provider: () -> InputConnection?,
+        inputType: Int
+    ) {
+        if (imeService != null) {
+            imeServiceRef = WeakReference(imeService)
+        }
         connectionProvider = provider
         activeInputType = inputType
         _sessionState.update { it.copy(isKeyboardVisible = true) }
     }
 
     fun unbindInputMethod() {
-        connectionProvider = null
-        activeInputType = 0
         _sessionState.update {
             it.copy(
                 isKeyboardVisible = false,
                 activeInputTarget = ActiveInputTarget.HOST_APP
             )
+        }
+    }
+
+    /**
+     * Collapses the keyboard's visible insets to 0px without calling requestHideSelf(0),
+     * so the underlying chat app expands to full screen height while keeping the IME bound
+     * and the text field focused.
+     */
+    fun hideKeyboardForSelection() {
+        collapsedForSelection = true
+        mainHandler.post {
+            runCatching {
+                val ime = imeServiceRef?.get()
+                if (ime is LatinIME) {
+                    ime.setSelectionCollapseMode(true)
+                } else {
+                    ime?.requestHideSelf(0)
+                }
+            }
+        }
+    }
+
+    /**
+     * Restores the keyboard's full height and visibility immediately when selection finishes
+     * or is canceled.
+     */
+    fun restoreKeyboardAfterSelection() {
+        collapsedForSelection = false
+        val delays = longArrayOf(0L, 100L, 260L)
+        for (delayMs in delays) {
+            mainHandler.postDelayed({
+                collapsedForSelection = false
+                val ime = imeServiceRef?.get() ?: return@postDelayed
+                runCatching {
+                    if (ime is LatinIME) {
+                        ime.setSelectionCollapseMode(false)
+                    }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        ime.requestShowSelf(InputMethodManager.SHOW_IMPLICIT)
+                    }
+                }
+            }, delayMs)
         }
     }
 
@@ -84,7 +149,8 @@ object InputConnectionBridge {
             AiSessionState(
                 isPanelOpen = current.isPanelOpen,
                 isKeyboardVisible = current.isKeyboardVisible,
-                preservedDraft = current.preservedDraft
+                preservedDraft = current.preservedDraft,
+                userProfile = current.userProfile
             )
         }
     }

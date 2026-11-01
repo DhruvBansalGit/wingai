@@ -1,6 +1,18 @@
 package com.wingai.keyboard.ui
 
 import android.content.Intent
+import android.graphics.BitmapFactory
+import android.util.Base64
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -14,36 +26,45 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wingai.keyboard.data.ActiveInputTarget
 import com.wingai.keyboard.data.AiSessionState
 import com.wingai.keyboard.data.InputConnectionBridge
+import com.wingai.keyboard.data.ReplySuggestion
 import com.wingai.keyboard.data.ReplyTone
 import com.wingai.keyboard.data.RewriteAction
+import com.wingai.keyboard.data.UserProfile
 import helium314.keyboard.settings.SettingsActivity
 import helium314.keyboard.settings.SettingsDestination
 
 @Composable
 fun AiControlPanel(
     state: AiSessionState,
-    panelHeight: Dp = 225.dp,
+    panelHeight: Dp = 250.dp,
     isFloatingOverlay: Boolean = false,
     onAnalyzeScreen: () -> Unit,
     onPasteFromClipboard: () -> Unit,
@@ -62,16 +83,16 @@ fun AiControlPanel(
     onClearContext: () -> Unit,
     onClose: () -> Unit
 ) {
+    val context = LocalContext.current
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 180.dp, max = panelHeight)
-            .background(Color(0xFF131824), RoundedCornerShape(12.dp))
-            .border(1.dp, Color(0xFF28324B), RoundedCornerShape(12.dp))
-            .padding(horizontal = 10.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+            .background(WingAiTokens.BgCanvas)
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        // If inside the floating overlay (no keyboard toolbar), show a slim top action bar
         if (isFloatingOverlay) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -80,80 +101,91 @@ fun AiControlPanel(
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     CompactPillButton(
-                        text = "\uD83D\uDCF8 Read Screen",
-                        backgroundColor = Color(0xFF5C6BC0),
-                        textColor = Color.White,
+                        text = "Select Area",
+                        backgroundColor = WingAiTokens.AccentPrimary,
+                        borderColor = WingAiTokens.AccentPrimary,
+                        textColor = WingAiTokens.OnAccentPrimary,
                         onClick = onAnalyzeScreen
                     )
                     CompactPillButton(
                         text = "Paste",
-                        backgroundColor = Color(0xFF232C42),
+                        backgroundColor = WingAiTokens.Surface1,
                         onClick = onPasteFromClipboard
-                    )
-                    CompactPillButton(
-                        text = "Generate",
-                        backgroundColor = Color(0xFF2E3B59),
-                        onClick = onGenerateReply
                     )
                 }
                 CompactPillButton(
                     text = "\u2715",
-                    backgroundColor = Color(0xFF232C42),
+                    backgroundColor = WingAiTokens.Surface2,
                     onClick = onClose
                 )
             }
         }
 
-        // Row 1: Account Plan badge + Paste Chat + Tone selector + Reset
-        val context = LocalContext.current
+        // Top Key-Cap Strip: Plan + Paste + Tone Chips + Reset
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             val user = state.userProfile
+            val isPaid = user?.isPaid == true
             val planLabel = when {
-                user == null -> "\uD83D\uDC64 Plan"
-                user.isPaid -> "\uD83D\uDC51 Paid"
-                else -> "\uD83D\uDC64 Free (${user.remaining ?: 5}/${user.dailyLimit ?: 5})"
+                user == null -> "Plan"
+                isPaid -> "Pro"
+                else -> "${user.remaining ?: 5}/${user.dailyLimit ?: 5} Free"
             }
             CompactPillButton(
                 text = planLabel,
-                backgroundColor = if (user?.isPaid == true) Color(0xFF2E7D32) else Color(0xFF283593),
-                textColor = Color.White,
+                backgroundColor = WingAiTokens.Surface2,
+                borderColor = WingAiTokens.BorderSubtle,
+                textColor = if (isPaid) WingAiTokens.AccentEmerald else WingAiTokens.TextSecondary,
                 onClick = {
-                    val intent = Intent(context, SettingsActivity::class.java).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    runCatching {
+                        val intent = Intent(context, SettingsActivity::class.java).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        context.startActivity(intent)
+                        SettingsDestination.navigateTo(SettingsDestination.WingAiUser)
                     }
-                    context.startActivity(intent)
-                    SettingsDestination.navigateTo(SettingsDestination.WingAiUser)
                 }
             )
+
             CompactPillButton(
                 text = "Paste Chat",
-                backgroundColor = Color(0xFF232C42),
-                textColor = Color.White,
+                backgroundColor = WingAiTokens.Surface1,
+                borderColor = WingAiTokens.BorderSubtle,
                 onClick = onPasteFromClipboard
             )
-            ToneChip(
-                label = "All 3 Tones",
+
+            WingAiToneChip(
+                label = "All",
                 selected = state.selectedTone == null,
+                accentColor = WingAiTokens.AccentPrimary,
                 onClick = { onToneSelect(null) }
             )
+
             ReplyTone.entries.forEach { tone ->
-                ToneChip(
+                WingAiToneChip(
                     label = tone.label,
                     selected = state.selectedTone == tone,
+                    accentColor = WingAiTokens.toneColor(tone.wireName),
                     onClick = { onToneSelect(tone) }
                 )
             }
-            if (state.suggestions.isNotEmpty() || state.customInstruction.isNotBlank() || !state.errorMessage.isNullOrBlank()) {
+
+            if (
+                state.suggestions.isNotEmpty() ||
+                state.customInstruction.isNotBlank() ||
+                !state.selectedImageBase64.isNullOrBlank() ||
+                state.pastedContext.isNotBlank() ||
+                !state.errorMessage.isNullOrBlank()
+            ) {
                 CompactPillButton(
                     text = "Reset",
-                    backgroundColor = Color(0xFF262F45),
-                    textColor = Color(0xFFB0BEC5),
+                    backgroundColor = WingAiTokens.Surface2,
+                    textColor = WingAiTokens.TextSecondary,
                     onClick = onClearContext
                 )
             }
@@ -169,22 +201,29 @@ fun AiControlPanel(
                     value = state.customInstruction,
                     onValueChange = onCustomInstructionChange,
                     modifier = Modifier.weight(1f),
-                    placeholder = { Text("e.g. Tell them I am busy today", fontSize = 11.sp, color = Color(0xFF90A4AE)) },
+                    placeholder = {
+                        Text(
+                            "e.g. Tell them I am busy today",
+                            fontSize = 11.sp,
+                            color = WingAiTokens.TextMuted
+                        )
+                    },
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedContainerColor = Color(0xFF1E273C),
-                        unfocusedContainerColor = Color(0xFF1E273C),
-                        focusedBorderColor = Color(0xFF42A5F5),
-                        unfocusedBorderColor = Color(0xFF546E7A),
-                        cursorColor = Color.White
+                        focusedTextColor = WingAiTokens.TextPrimary,
+                        unfocusedTextColor = WingAiTokens.TextPrimary,
+                        focusedContainerColor = WingAiTokens.Surface1,
+                        unfocusedContainerColor = WingAiTokens.Surface1,
+                        focusedBorderColor = WingAiTokens.AccentPrimary,
+                        unfocusedBorderColor = WingAiTokens.BorderSubtle,
+                        cursorColor = WingAiTokens.AccentPrimary
                     ),
                     singleLine = true
                 )
                 CompactPillButton(
                     text = "Apply",
-                    backgroundColor = Color(0xFF5C6BC0),
-                    textColor = Color.White,
+                    backgroundColor = WingAiTokens.AccentPrimary,
+                    borderColor = WingAiTokens.AccentPrimary,
+                    textColor = WingAiTokens.OnAccentPrimary,
                     onClick = {
                         InputConnectionBridge.updateState {
                             it.copy(activeInputTarget = ActiveInputTarget.HOST_APP)
@@ -195,7 +234,7 @@ fun AiControlPanel(
             }
         }
 
-        // Scrollable content area for status, errors, and the 3 reply cards
+        // Scrollable Workspace: Context Badges, Loading/Error States, and 3 Reply Key-Cards
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -203,26 +242,138 @@ fun AiControlPanel(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            if (state.pastedContext.isNotBlank()) {
+            // Active Custom Instruction Pill
+            AnimatedVisibility(
+                visible = state.customInstruction.isNotBlank(),
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFF1A253B), RoundedCornerShape(8.dp))
-                        .border(1.dp, Color(0xFF3949AB), RoundedCornerShape(8.dp))
+                        .clip(WingAiTokens.RadiusSm)
+                        .background(WingAiTokens.Surface2)
+                        .border(1.dp, WingAiTokens.BorderSubtle, WingAiTokens.RadiusSm)
+                        .padding(horizontal = 10.dp, vertical = 5.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Prompt: ${state.customInstruction}",
+                        color = WingAiTokens.TextPrimary,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f).padding(end = 6.dp)
+                    )
+                    CompactPillButton(
+                        text = "\u2715",
+                        height = 24.dp,
+                        backgroundColor = WingAiTokens.Surface1,
+                        onClick = { onCustomInstructionChange("") }
+                    )
+                }
+            }
+
+            // Selected Image Region Preview Banner
+            AnimatedVisibility(
+                visible = !state.selectedImageBase64.isNullOrBlank(),
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                val previewBitmap = remember(state.selectedImageBase64) {
+                    runCatching {
+                        val bytes = Base64.decode(state.selectedImageBase64, Base64.DEFAULT)
+                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
+                    }.getOrNull()
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(WingAiTokens.RadiusSm)
+                        .background(WingAiTokens.Surface1)
+                        .border(1.dp, WingAiTokens.BorderSubtle, WingAiTokens.RadiusSm)
                         .padding(horizontal = 10.dp, vertical = 6.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(modifier = Modifier.weight(1f).padding(end = 6.dp)) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(9.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (previewBitmap != null) {
+                            Image(
+                                bitmap = previewBitmap,
+                                contentDescription = "Selected chat region",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .width(50.dp)
+                                    .height(32.dp)
+                                    .clip(WingAiTokens.RadiusSm)
+                                    .border(1.dp, WingAiTokens.BorderStrong, WingAiTokens.RadiusSm)
+                            )
+                        }
+                        Column {
+                            Text(
+                                text = "Selected Screen Area",
+                                color = WingAiTokens.TextPrimary,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = "Reusing cropped selection",
+                                color = WingAiTokens.TextSecondary,
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                        CompactPillButton(
+                            text = "Re-select",
+                            height = 24.dp,
+                            fontSize = 11.sp,
+                            backgroundColor = WingAiTokens.Surface2,
+                            onClick = onAnalyzeScreen
+                        )
+                        CompactPillButton(
+                            text = "\u2715",
+                            height = 24.dp,
+                            fontSize = 11.sp,
+                            backgroundColor = WingAiTokens.Surface2,
+                            onClick = onCancelPendingCapture
+                        )
+                    }
+                }
+            }
+
+            // Pasted Chat Context Preview Banner
+            AnimatedVisibility(
+                visible = state.pastedContext.isNotBlank(),
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(WingAiTokens.RadiusSm)
+                        .background(WingAiTokens.Surface1)
+                        .border(1.dp, WingAiTokens.BorderSubtle, WingAiTokens.RadiusSm)
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                         Text(
-                            text = "\uD83D\uDCCB Pasted Chat Context:",
-                            color = Color(0xFF90CAF9),
+                            text = "Pasted Chat",
+                            color = WingAiTokens.TextSecondary,
                             fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.SemiBold
                         )
                         Text(
                             text = state.pastedContext,
-                            color = Color.White,
+                            color = WingAiTokens.TextPrimary,
                             fontSize = 12.sp,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis
@@ -230,139 +381,164 @@ fun AiControlPanel(
                     }
                     CompactPillButton(
                         text = "\u2715",
-                        backgroundColor = Color(0xFF28334D),
+                        height = 24.dp,
+                        fontSize = 11.sp,
+                        backgroundColor = WingAiTokens.Surface2,
                         onClick = { onPastedContextChange("") }
                     )
                 }
             }
 
+            // Skeleton Loading State (3 Reply Card Skeletons)
             if (state.isLoading) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color(0xFF1C2438), RoundedCornerShape(8.dp))
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                repeat(3) { index ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(WingAiTokens.RadiusSm)
+                            .background(WingAiTokens.Surface1)
+                            .border(1.dp, WingAiTokens.BorderSubtle, WingAiTokens.RadiusSm)
+                            .padding(horizontal = 11.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(7.dp)
                     ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            strokeWidth = 2.dp,
-                            color = Color(0xFF82B1FF)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                WingAiSkeletonBox(
+                                    modifier = Modifier.size(6.dp),
+                                    shape = CircleShape
+                                )
+                                WingAiSkeletonBox(
+                                    modifier = Modifier
+                                        .width(64.dp)
+                                        .height(10.dp)
+                                )
+                            }
+                            if (index == 0) {
+                                CompactPillButton(
+                                    text = "Cancel",
+                                    height = 22.dp,
+                                    fontSize = 10.5.sp,
+                                    backgroundColor = WingAiTokens.Surface2,
+                                    textColor = WingAiTokens.TextSecondary,
+                                    onClick = onCancelRequest
+                                )
+                            } else {
+                                Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                                    WingAiSkeletonBox(
+                                        modifier = Modifier
+                                            .width(48.dp)
+                                            .height(22.dp)
+                                    )
+                                    WingAiSkeletonBox(
+                                        modifier = Modifier
+                                            .width(48.dp)
+                                            .height(22.dp)
+                                    )
+                                }
+                            }
+                        }
+                        WingAiSkeletonBox(
+                            modifier = Modifier
+                                .fillMaxWidth(0.92f)
+                                .height(13.dp)
                         )
-                        Text(
-                            text = "Reading conversation & crafting 3 replies...",
-                            color = Color.White,
-                            fontSize = 12.sp
+                        WingAiSkeletonBox(
+                            modifier = Modifier
+                                .fillMaxWidth(if (index == 1) 0.72f else 0.60f)
+                                .height(13.dp)
                         )
                     }
-                    CompactPillButton(
-                        text = "Cancel",
-                        backgroundColor = Color(0xFF4A252C),
-                        textColor = Color(0xFFFF8A80),
-                        onClick = onCancelRequest
-                    )
                 }
             }
 
+            // Error State Banner
             if (!state.errorMessage.isNullOrBlank() && !state.isLoading) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFF3B1D26), RoundedCornerShape(8.dp))
-                        .border(1.dp, Color(0xFF6E303E), RoundedCornerShape(8.dp))
-                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                        .clip(WingAiTokens.RadiusMd)
+                        .background(WingAiTokens.AccentRoseContainer)
+                        .border(1.dp, WingAiTokens.AccentRose, WingAiTokens.RadiusMd)
+                        .padding(horizontal = 11.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = state.errorMessage,
-                        color = Color(0xFFFFCDD2),
+                        color = WingAiTokens.TextPrimary,
                         fontSize = 12.sp,
                         modifier = Modifier.weight(1f).padding(end = 8.dp)
                     )
                     CompactPillButton(
                         text = "Retry",
-                        backgroundColor = Color(0xFF5C6BC0),
-                        textColor = Color.White,
+                        height = 26.dp,
+                        fontSize = 11.sp,
+                        backgroundColor = WingAiTokens.AccentPrimary,
+                        borderColor = WingAiTokens.AccentPrimary,
+                        textColor = WingAiTokens.OnAccentPrimary,
                         onClick = onAnalyzeScreen
                     )
                 }
             }
 
+            // Minimal Empty State Card
             if (state.suggestions.isEmpty() && !state.isLoading && state.errorMessage.isNullOrBlank()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color(0xFF1B2234), RoundedCornerShape(8.dp))
-                        .padding(12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Tap \"Analyze Screen\" above (or double-tap \uD83E\uDEBD) to read the chat and generate 3 replies.",
-                        color = Color(0xFFB0BEC5),
-                        fontSize = 12.sp
-                    )
-                }
-            }
-
-            state.suggestions.forEach { item ->
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(Color(0xFF1E273C))
-                        .border(1.dp, Color(0xFF2F3D5C), RoundedCornerShape(10.dp))
-                        .clickable { onInsertReply(item.text) }
-                        .padding(horizontal = 10.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                        .clip(WingAiTokens.RadiusMd)
+                        .background(WingAiTokens.Surface1)
+                        .border(1.dp, WingAiTokens.BorderSubtle, WingAiTokens.RadiusMd)
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = item.tone.uppercase(),
-                            color = Color(0xFF80CBC4),
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            CompactPillButton(
-                                text = "Shorten",
-                                backgroundColor = Color(0xFF28334D),
-                                onClick = { onRewriteAction(RewriteAction.SHORTEN, item.text) }
-                            )
-                            CompactPillButton(
-                                text = "Expand",
-                                backgroundColor = Color(0xFF28334D),
-                                onClick = { onRewriteAction(RewriteAction.EXPAND, item.text) }
-                            )
-                            if (isFloatingOverlay) {
-                                CompactPillButton(
-                                    text = "Copy",
-                                    backgroundColor = Color(0xFF28334D),
-                                    onClick = { onCopyReply(item.text) }
-                                )
-                            }
-                            CompactPillButton(
-                                text = "Insert \u2197",
-                                backgroundColor = Color(0xFF5C6BC0),
-                                textColor = Color.White,
-                                onClick = { onInsertReply(item.text) }
-                            )
-                        }
-                    }
                     Text(
-                        text = item.text,
-                        color = Color.White,
+                        text = "Select a message area or paste chat text",
+                        color = WingAiTokens.TextPrimary,
                         fontSize = 13.sp,
-                        lineHeight = 17.sp
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "Tap Select to highlight a chat section on screen, or tap Paste Chat to reply to copied text.",
+                        color = WingAiTokens.TextSecondary,
+                        fontSize = 12.sp,
+                        lineHeight = 16.sp
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        CompactPillButton(
+                            text = "Select Screen Area",
+                            backgroundColor = WingAiTokens.AccentPrimary,
+                            borderColor = WingAiTokens.AccentPrimary,
+                            textColor = WingAiTokens.OnAccentPrimary,
+                            onClick = onAnalyzeScreen
+                        )
+                        CompactPillButton(
+                            text = "Paste Chat",
+                            backgroundColor = WingAiTokens.Surface2,
+                            borderColor = WingAiTokens.BorderSubtle,
+                            onClick = onPasteFromClipboard
+                        )
+                    }
+                }
+            }
+
+            // 3 Reply Key-Cards
+            if (!state.isLoading) {
+                state.suggestions.forEach { item ->
+                    ReplySuggestionCard(
+                        item = item,
+                        isFloatingOverlay = isFloatingOverlay,
+                        onInsert = { onInsertReply(item.text) },
+                        onCopy = { onCopyReply(item.text) },
+                        onShorten = { onRewriteAction(RewriteAction.SHORTEN, item.text) },
+                        onExpand = { onRewriteAction(RewriteAction.EXPAND, item.text) }
                     )
                 }
             }
@@ -371,58 +547,126 @@ fun AiControlPanel(
 }
 
 @Composable
-fun CompactPillButton(
-    text: String,
-    backgroundColor: Color = Color(0xFF232C42),
-    textColor: Color = Color(0xFFE3F2FD),
-    onClick: () -> Unit
+private fun ReplySuggestionCard(
+    item: ReplySuggestion,
+    isFloatingOverlay: Boolean,
+    onInsert: () -> Unit,
+    onCopy: () -> Unit,
+    onShorten: () -> Unit,
+    onExpand: () -> Unit
 ) {
-    Box(
+    val badgeColor = WingAiTokens.toneColor(item.tone)
+
+    Column(
         modifier = Modifier
-            .height(28.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(backgroundColor)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp),
-        contentAlignment = Alignment.Center
+            .fillMaxWidth()
+            .clip(WingAiTokens.RadiusSm)
+            .background(WingAiTokens.Surface1)
+            .border(1.dp, WingAiTokens.BorderSubtle, WingAiTokens.RadiusSm)
+            .clickable(role = Role.Button, onClick = onInsert)
+            .padding(horizontal = 11.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(5.dp)
     ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(badgeColor)
+                )
+                Text(
+                    text = item.tone.uppercase(),
+                    color = WingAiTokens.TextSecondary,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 0.5.sp
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                CompactPillButton(
+                    text = "Shorten",
+                    height = 24.dp,
+                    fontSize = 11.sp,
+                    backgroundColor = WingAiTokens.Surface2,
+                    textColor = WingAiTokens.TextSecondary,
+                    onClick = onShorten
+                )
+                CompactPillButton(
+                    text = "Expand",
+                    height = 24.dp,
+                    fontSize = 11.sp,
+                    backgroundColor = WingAiTokens.Surface2,
+                    textColor = WingAiTokens.TextSecondary,
+                    onClick = onExpand
+                )
+                if (isFloatingOverlay) {
+                    CompactPillButton(
+                        text = "Copy",
+                        height = 24.dp,
+                        fontSize = 11.sp,
+                        backgroundColor = WingAiTokens.Surface2,
+                        onClick = onCopy
+                    )
+                }
+                CompactPillButton(
+                    text = "Insert",
+                    height = 24.dp,
+                    fontSize = 11.sp,
+                    backgroundColor = WingAiTokens.AccentPrimary,
+                    borderColor = WingAiTokens.AccentPrimary,
+                    textColor = WingAiTokens.OnAccentPrimary,
+                    onClick = onInsert
+                )
+            }
+        }
         Text(
-            text = text,
-            color = textColor,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            text = item.text,
+            color = WingAiTokens.TextPrimary,
+            fontSize = 13.5.sp,
+            lineHeight = 18.sp
         )
     }
 }
 
+@Preview(showBackground = true, widthDp = 390, heightDp = 250)
 @Composable
-private fun ToneChip(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .height(28.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(if (selected) Color(0xFF3949AB) else Color(0xFF1F273A))
-            .border(
-                width = 1.dp,
-                color = if (selected) Color(0xFF7986CB) else Color(0xFF34415E),
-                shape = RoundedCornerShape(14.dp)
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = label,
-            color = if (selected) Color.White else Color(0xFFCFD8DC),
-            fontSize = 11.sp,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-            maxLines = 1
+private fun AiControlPanelRepliesPreview() {
+    WingAiTheme {
+        AiControlPanel(
+            state = AiSessionState(
+                isPanelOpen = true,
+                pastedContext = "Hey! Are we still on for coffee at 4pm today?",
+                userProfile = UserProfile(userId = "wing_9f8a7b6c", tier = "free", dailyUsed = 2, dailyLimit = 5, remaining = 3),
+                suggestions = listOf(
+                    ReplySuggestion("casual", "Yep, 4pm works for me! See you there."),
+                    ReplySuggestion("friendly", "Yes! Really looking forward to catching up at 4."),
+                    ReplySuggestion("professional", "Yes, 4:00 PM still works well for me. See you soon.")
+                )
+            ),
+            onAnalyzeScreen = {},
+            onPasteFromClipboard = {},
+            onToneSelect = {},
+            onCustomInstructionChange = {},
+            onPastedContextChange = {},
+            onGenerateReply = {},
+            onConfirmUploadCapture = {},
+            onCancelPendingCapture = {},
+            onCancelRequest = {},
+            onSelectSuggestion = {},
+            onEditingReplyChange = {},
+            onInsertReply = {},
+            onCopyReply = {},
+            onRewriteAction = { _, _ -> },
+            onClearContext = {},
+            onClose = {}
         )
     }
 }

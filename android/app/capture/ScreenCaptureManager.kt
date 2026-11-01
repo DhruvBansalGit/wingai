@@ -13,7 +13,12 @@ import android.media.projection.MediaProjectionManager
 import android.os.Handler
 import android.os.Looper
 import android.util.Base64
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.io.ByteArrayOutputStream
+import kotlin.math.max
+import kotlin.math.min
 
 object ScreenCaptureManager {
 
@@ -26,24 +31,42 @@ object ScreenCaptureManager {
     @Volatile
     private var imageReader: ImageReader? = null
 
-    @Volatile
-    private var latestEncodedFrame: String? = null
+    private val _capturedBitmapFlow = MutableStateFlow<Bitmap?>(null)
+    val capturedBitmapFlow: StateFlow<Bitmap?> = _capturedBitmapFlow.asStateFlow()
 
-    private var screenWidth: Int = 0
-    private var screenHeight: Int = 0
     private val mainHandler = Handler(Looper.getMainLooper())
 
-    fun hasActiveSession(): Boolean =
-        mediaProjection != null && virtualDisplay != null && imageReader != null
+    fun hasActiveSession(): Boolean = false
 
-    fun startSession(
+    fun setCapturedBitmap(bitmap: Bitmap?) {
+        val old = _capturedBitmapFlow.value
+        _capturedBitmapFlow.value = bitmap
+        if (old != null && old !== bitmap && !old.isRecycled) {
+            runCatching { old.recycle() }
+        }
+    }
+
+    fun clearCapturedBitmap() {
+        val old = _capturedBitmapFlow.value
+        _capturedBitmapFlow.value = null
+        if (old != null && !old.isRecycled) {
+            runCatching { old.recycle() }
+        }
+    }
+
+    /**
+     * Captures ONE single full-screen frame after the permission dialog closes
+     * and IMMEDIATELY terminates MediaProjection & VirtualDisplay so screen sharing
+     * never stays running in the background.
+     */
+    fun captureSingleFrameAndStop(
         context: Context,
         resultCode: Int,
         permissionData: Intent,
-        onReady: () -> Unit = {},
-        onError: (String) -> Unit = {}
+        onCaptured: (Bitmap) -> Unit,
+        onError: (String) -> Unit
     ) {
-        stopSession()
+        stopProjectionOnly()
 
         val manager = context.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as? MediaProjectionManager
         if (manager == null) {
@@ -61,17 +84,20 @@ object ScreenCaptureManager {
         }
 
         val metrics = context.resources.displayMetrics
-        screenWidth = metrics.widthPixels.coerceAtLeast(320)
-        screenHeight = metrics.heightPixels.coerceAtLeast(480)
+        val screenWidth = metrics.widthPixels.coerceAtLeast(320)
+        val screenHeight = metrics.heightPixels.coerceAtLeast(480)
         val density = metrics.densityDpi
 
         val reader = ImageReader.newInstance(screenWidth, screenHeight, PixelFormat.RGBA_8888, 2)
+        var latestBitmap: Bitmap? = null
+
         reader.setOnImageAvailableListener({ ir ->
             val img = runCatching { ir.acquireLatestImage() }.getOrNull() ?: return@setOnImageAvailableListener
             try {
-                val encoded = encodeCroppedConversationFrame(img, screenWidth, screenHeight)
-                if (encoded != null) {
-                    latestEncodedFrame = encoded
+                val bmp = imageToBitmap(img, screenWidth, screenHeight)
+                if (bmp != null) {
+                    latestBitmap?.recycle()
+                    latestBitmap = bmp
                 }
             } finally {
                 runCatching { img.close() }
@@ -80,14 +106,14 @@ object ScreenCaptureManager {
 
         val callback = object : MediaProjection.Callback() {
             override fun onStop() {
-                stopSession()
+                stopProjectionOnly()
             }
         }
         projection.registerCallback(callback, mainHandler)
 
         val display = runCatching {
             projection.createVirtualDisplay(
-                "WingAiScreenSession",
+                "WingAiOneShotCapture",
                 screenWidth,
                 screenHeight,
                 density,
@@ -106,44 +132,63 @@ object ScreenCaptureManager {
         mediaProjection = projection
         imageReader = reader
         virtualDisplay = display
-        // Wait 550ms after permission dialog closes so the underlying chat app is fully visible.
-        mainHandler.postDelayed({ onReady() }, 550L)
-    }
 
-    fun captureLatestFrame(
-        onSuccess: (String) -> Unit,
-        onError: (String) -> Unit
-    ) {
-        val reader = imageReader
-        if (!hasActiveSession() || reader == null) {
-            onError("Screen permission is not active. Tap Read again to grant permission.")
-            return
-        }
-
+        // Wait 450ms for the permission dialog to disappear, grab one frame, and IMMEDIATELY stop projection.
         mainHandler.postDelayed({
-            val freshImage = runCatching { reader.acquireLatestImage() }.getOrNull()
+            val freshImg = runCatching { reader.acquireLatestImage() }.getOrNull()
             try {
-                if (freshImage != null) {
-                    val encoded = encodeCroppedConversationFrame(freshImage, screenWidth, screenHeight)
-                    if (encoded != null) {
-                        latestEncodedFrame = encoded
+                if (freshImg != null) {
+                    val bmp = imageToBitmap(freshImg, screenWidth, screenHeight)
+                    if (bmp != null) {
+                        latestBitmap?.recycle()
+                        latestBitmap = bmp
                     }
                 }
             } finally {
-                runCatching { freshImage?.close() }
+                runCatching { freshImg?.close() }
             }
 
-            val frame = latestEncodedFrame
-            if (frame == null) {
-                onError("Screen content is protected (FLAG_SECURE) or not ready yet.")
+            // Immediately stop MediaProjection so screen sharing is NEVER left active.
+            stopProjectionOnly()
+
+            val finalBitmap = latestBitmap
+            if (finalBitmap == null || isBlankFrame(finalBitmap)) {
+                finalBitmap?.recycle()
+                onError("Screen content is protected (FLAG_SECURE) or could not be captured.")
             } else {
-                onSuccess(frame)
+                setCapturedBitmap(finalBitmap)
+                onCaptured(finalBitmap)
             }
-        }, 150L)
+        }, 450L)
     }
 
-    fun stopSession() {
-        latestEncodedFrame = null
+    fun cropAndEncodeBitmap(
+        source: Bitmap,
+        normLeft: Float,
+        normTop: Float,
+        normRight: Float,
+        normBottom: Float
+    ): String {
+        val leftFrac = min(normLeft, normRight).coerceIn(0f, 0.95f)
+        val rightFrac = max(normLeft, normRight).coerceIn(leftFrac + 0.05f, 1f)
+        val topFrac = min(normTop, normBottom).coerceIn(0f, 0.95f)
+        val bottomFrac = max(normTop, normBottom).coerceIn(topFrac + 0.05f, 1f)
+
+        val x = (source.width * leftFrac).toInt().coerceIn(0, source.width - 1)
+        val y = (source.height * topFrac).toInt().coerceIn(0, source.height - 1)
+        val w = ((source.width * (rightFrac - leftFrac)).toInt()).coerceIn(1, source.width - x)
+        val h = ((source.height * (bottomFrac - topFrac)).toInt()).coerceIn(1, source.height - y)
+
+        val cropped = Bitmap.createBitmap(source, x, y, w, h)
+        val out = ByteArrayOutputStream()
+        cropped.compress(Bitmap.CompressFormat.JPEG, 85, out)
+        if (cropped !== source) {
+            cropped.recycle()
+        }
+        return Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP)
+    }
+
+    fun stopProjectionOnly() {
         runCatching { virtualDisplay?.release() }
         virtualDisplay = null
         runCatching { imageReader?.close() }
@@ -153,37 +198,31 @@ object ScreenCaptureManager {
         runCatching { proj?.stop() }
     }
 
-    private fun encodeCroppedConversationFrame(image: Image, width: Int, height: Int): String? {
+    fun stopSession() {
+        stopProjectionOnly()
+        clearCapturedBitmap()
+    }
+
+    private fun imageToBitmap(image: Image, width: Int, height: Int): Bitmap? {
         val plane = image.planes.firstOrNull() ?: return null
         val buffer = plane.buffer
         val pixelStride = plane.pixelStride
         val rowStride = plane.rowStride
         val rowPadding = rowStride - pixelStride * width
 
-        val fullBitmap = Bitmap.createBitmap(
+        val rawBitmap = Bitmap.createBitmap(
             width + rowPadding / pixelStride,
             height,
             Bitmap.Config.ARGB_8888
         )
-        fullBitmap.copyPixelsFromBuffer(buffer)
-
-        // Trim top status bar (6%) and bottom keyboard area (36%) so Gemini sees only the chat conversation.
-        val topCrop = (height * 0.06f).toInt().coerceAtLeast(0)
-        val bottomCrop = (height * 0.36f).toInt().coerceAtLeast(0)
-        val cropHeight = (height - topCrop - bottomCrop).coerceAtLeast(height / 3)
-
-        val cropped = Bitmap.createBitmap(fullBitmap, 0, topCrop, width, cropHeight)
-        fullBitmap.recycle()
-
-        if (isBlankFrame(cropped)) {
-            cropped.recycle()
-            return null
+        rawBitmap.copyPixelsFromBuffer(buffer)
+        return if (rawBitmap.width == width) {
+            rawBitmap
+        } else {
+            val trimmed = Bitmap.createBitmap(rawBitmap, 0, 0, width, height)
+            rawBitmap.recycle()
+            trimmed
         }
-
-        val out = ByteArrayOutputStream()
-        cropped.compress(Bitmap.CompressFormat.JPEG, 82, out)
-        cropped.recycle()
-        return Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP)
     }
 
     private fun isBlankFrame(bitmap: Bitmap): Boolean {

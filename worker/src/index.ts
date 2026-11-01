@@ -10,6 +10,17 @@ export interface D1Binding {
   };
 }
 
+export interface R2BucketBinding {
+  put(
+    key: string,
+    value: Uint8Array | string,
+    options?: {
+      httpMetadata?: { contentType?: string };
+      customMetadata?: Record<string, string>;
+    }
+  ): Promise<unknown>;
+}
+
 export interface Env {
   GEMINI_API_KEY?: string;
   GEMINI_MODEL?: string;
@@ -17,6 +28,7 @@ export interface Env {
   RATE_LIMIT_PER_MINUTE?: string;
   FREE_DAILY_LIMIT?: string;
   DB?: D1Binding;
+  STORAGE?: R2BucketBinding;
 }
 
 export type UserTier = "free" | "paid";
@@ -79,8 +91,9 @@ Follow these rules:
 7. When a custom instruction is provided, follow the instruction in all three replies.
 8. Do not invent facts about the user.
 9. Do not assume that the user agreed to a request unless the custom instruction says so.
-10. If the conversation is not clear or readable, set context_status to "insufficient" and provide neutral replies or ask for more context.
-11. Return valid JSON matching the required schema.`;
+10. Match the language and script of the conversation (for example, if the chat is in Hinglish—Hindi written in Latin/English script—write the 3 replies in natural Hinglish).
+11. If the conversation is not clear or readable, set context_status to "insufficient" and provide neutral replies or ask for more context.
+12. Return valid JSON matching the required schema.`;
 
 const REPLY_RESPONSE_SCHEMA = {
   type: "OBJECT",
@@ -293,6 +306,152 @@ function isValidBase64(input: string): boolean {
     return true;
   } catch {
     return false;
+  }
+}
+
+function base64ToBytes(base64: string): Uint8Array {
+  const bin = atob(base64.trim());
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) {
+    bytes[i] = bin.charCodeAt(i);
+  }
+  return bytes;
+}
+
+interface ArchiveLogInput {
+  env: Env;
+  userId: string;
+  tier: UserTier;
+  endpoint: string;
+  tone?: string;
+  conversationText?: string;
+  customInstruction?: string;
+  replyText?: string;
+  imageBase64?: string;
+  mimeType?: string;
+  statusCode: number;
+  responseBody: ReplyResponse | { detail: string };
+  latencyMs: number;
+}
+
+async function archiveRequestToR2AndD1(input: ArchiveLogInput): Promise<void> {
+  const requestId = crypto.randomUUID();
+  const createdAt = new Date().toISOString();
+  const datePrefix = createdAt.slice(0, 10);
+  const safeUserId = input.userId.replace(/[^a-zA-Z0-9_-]/g, "_") || "anonymous";
+
+  let imageR2Key: string | null = null;
+  if (input.imageBase64 && input.imageBase64.trim() && input.env.STORAGE) {
+    const ext = input.mimeType?.includes("png") ? "png" : "jpg";
+    imageR2Key = `images/${datePrefix}/${safeUserId}/${requestId}.${ext}`;
+    try {
+      const bytes = base64ToBytes(input.imageBase64);
+      await input.env.STORAGE.put(imageR2Key, bytes, {
+        httpMetadata: { contentType: input.mimeType || "image/jpeg" },
+        customMetadata: {
+          request_id: requestId,
+          user_id: input.userId,
+          tier: input.tier,
+          endpoint: input.endpoint,
+          created_at: createdAt,
+        },
+      });
+    } catch (err) {
+      console.error("Failed to save image to R2:", err);
+    }
+  }
+
+  const logR2Key = `logs/${datePrefix}/${safeUserId}/${requestId}.json`;
+  const logEntry = {
+    id: requestId,
+    created_at: createdAt,
+    user_id: input.userId,
+    tier: input.tier,
+    endpoint: input.endpoint,
+    tone: input.tone ?? null,
+    has_image: Boolean(imageR2Key),
+    image_r2_key: imageR2Key,
+    conversation_text: input.conversationText ?? null,
+    custom_instruction: input.customInstruction ?? null,
+    reply_text: input.replyText ?? null,
+    status_code: input.statusCode,
+    latency_ms: input.latencyMs,
+    response: input.responseBody,
+  };
+
+  console.log(
+    JSON.stringify({
+      event: "wingai_request",
+      id: requestId,
+      created_at: createdAt,
+      user_id: input.userId,
+      tier: input.tier,
+      endpoint: input.endpoint,
+      has_image: Boolean(imageR2Key),
+      image_r2_key: imageR2Key,
+      log_r2_key: logR2Key,
+      status_code: input.statusCode,
+      latency_ms: input.latencyMs,
+    })
+  );
+
+  if (input.env.STORAGE) {
+    try {
+      await input.env.STORAGE.put(logR2Key, JSON.stringify(logEntry, null, 2), {
+        httpMetadata: { contentType: "application/json" },
+        customMetadata: {
+          request_id: requestId,
+          user_id: input.userId,
+          endpoint: input.endpoint,
+          status_code: String(input.statusCode),
+        },
+      });
+    } catch (err) {
+      console.error("Failed to save log JSON to R2:", err);
+    }
+  }
+
+  if (input.env.DB) {
+    try {
+      const repliesJson =
+        "replies" in input.responseBody
+          ? JSON.stringify(input.responseBody.replies)
+          : JSON.stringify(input.responseBody);
+      await input.env.DB.prepare(
+        `INSERT INTO request_logs (
+          id, created_at, user_id, tier, endpoint, tone, has_image,
+          image_r2_key, log_r2_key, conversation_text, status_code, replies_json, latency_ms
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+        .bind(
+          requestId,
+          createdAt,
+          input.userId,
+          input.tier,
+          input.endpoint,
+          input.tone ?? null,
+          imageR2Key ? 1 : 0,
+          imageR2Key,
+          logR2Key,
+          input.conversationText ?? input.replyText ?? null,
+          input.statusCode,
+          repliesJson,
+          input.latencyMs
+        )
+        .run();
+    } catch (err) {
+      console.error("Failed to insert request_logs into D1:", err);
+    }
+  }
+}
+
+function scheduleArchive(c: Context<{ Bindings: Env }>, task: Promise<void>): void {
+  try {
+    if (c.executionCtx && typeof c.executionCtx.waitUntil === "function") {
+      c.executionCtx.waitUntil(task);
+    }
+  } catch {
+    // In unit tests without an ExecutionContext, task still runs in background
   }
 }
 
@@ -564,10 +723,29 @@ app.post("/v1/analyze", enforceRequestGuards, async (c) => {
 
   parts.push({ text: promptLines.join("\n") });
 
+  const startedAt = Date.now();
   const result = await callGemini(parts, c.env ?? {}, tone);
+  const latencyMs = Date.now() - startedAt;
   if (result.status === 200 && "replies" in result.body) {
     result.body.user = await incrementUserUsage(c.env ?? {}, userId);
   }
+  scheduleArchive(
+    c,
+    archiveRequestToR2AndD1({
+      env: c.env ?? {},
+      userId,
+      tier: userProfile.tier,
+      endpoint: "/v1/analyze",
+      tone,
+      conversationText,
+      customInstruction,
+      imageBase64,
+      mimeType,
+      statusCode: result.status,
+      responseBody: result.body,
+      latencyMs,
+    })
+  );
   return c.json(result.body, result.status as 200 | 400 | 503);
 });
 
@@ -628,10 +806,27 @@ app.post("/v1/replies", enforceRequestGuards, async (c) => {
     promptLines.push(`Follow this user instruction: ${customInstruction.trim()}`);
   }
 
+  const startedAt = Date.now();
   const result = await callGemini([{ text: promptLines.join("\n") }], c.env ?? {}, tone);
+  const latencyMs = Date.now() - startedAt;
   if (result.status === 200 && "replies" in result.body) {
     result.body.user = await incrementUserUsage(c.env ?? {}, userId);
   }
+  scheduleArchive(
+    c,
+    archiveRequestToR2AndD1({
+      env: c.env ?? {},
+      userId,
+      tier: userProfile.tier,
+      endpoint: "/v1/replies",
+      tone,
+      conversationText,
+      customInstruction,
+      statusCode: result.status,
+      responseBody: result.body,
+      latencyMs,
+    })
+  );
   return c.json(result.body, result.status as 200 | 400 | 503);
 });
 
@@ -709,10 +904,28 @@ app.post("/v1/rewrite", enforceRequestGuards, async (c) => {
     promptLines.push(`Custom instruction: ${customInstruction.trim()}`);
   }
 
+  const startedAt = Date.now();
   const result = await callGemini([{ text: promptLines.join("\n") }], c.env ?? {}, tone);
+  const latencyMs = Date.now() - startedAt;
   if (result.status === 200 && "replies" in result.body) {
     result.body.user = await incrementUserUsage(c.env ?? {}, userId);
   }
+  scheduleArchive(
+    c,
+    archiveRequestToR2AndD1({
+      env: c.env ?? {},
+      userId,
+      tier: userProfile.tier,
+      endpoint: "/v1/rewrite",
+      tone,
+      conversationText,
+      customInstruction,
+      replyText,
+      statusCode: result.status,
+      responseBody: result.body,
+      latencyMs,
+    })
+  );
   return c.json(result.body, result.status as 200 | 400 | 503);
 });
 
