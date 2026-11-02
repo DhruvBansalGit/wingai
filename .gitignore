@@ -1,0 +1,32 @@
+# Android / Gradle
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+.build-tools/
+android/app/.cxx/
+artifacts/apk/
+*.iml
+.idea/
+*.jks
+*.keystore
+
+# Cloudflare Worker / Node
+worker/node_modules/
+worker/.wrangler/
+worker/.dev.vars
+.env
+.env.*
+
+# macOS
+.DS_Store
+
+# iOS / SwiftPM build artifacts
+ios/.build/
+ios/artifacts/DerivedData/
+ios/artifacts/archives/
+ios/**/xcuserdata/
+artifacts/ios/*.zip
+*.p12
+*.mobileprovision
+.build/
